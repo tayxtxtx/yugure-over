@@ -119,7 +119,7 @@ function JustChattingOverlay({ obs = false } = {}) {
       {/* SPOTIFY NOW PLAYING — right of title banner */}
       <SpotifyNowPlaying style={{
         position: 'absolute',
-        left: 770, top: 36,
+        left: 805, top: 36,
         width: 380,
       }} />
 

@@ -199,7 +199,7 @@ function JustChattingOverlay({ obs = false } = {}) {
           flexShrink: 0,
         }}>
           <span style={{ fontSize: 12, fontFamily: '"JetBrains Mono", monospace', color: COLORS.cyan, letterSpacing: 2 }}>妖 · YOKAI</span>
-          <span style={{ position: 'relative', top: -4 }}>recent</span>
+          <span style={{ position: 'relative', top: -3 }}>recent</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 36, flex: 1, overflow: 'hidden' }}>
           {allEvents.length === 0 ? (

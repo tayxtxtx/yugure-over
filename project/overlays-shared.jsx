@@ -593,4 +593,29 @@ function TwitchSetupBanner({ show }) {
   );
 }
 
-Object.assign(window, { COLORS, CornerBracket, VKanji, Seal, LiveDot, SeigaihaTexture, Pill, FeedPlaceholder, useTwitchData, useTwitchChat, useSpotify, SpotifyNowPlaying, TwitchSetupBanner });
+// ─── STREAM SETTINGS (title, schedule) ──────────────────────────
+// Reads stream_title and stream_schedule from localStorage,
+// re-reads every 5 s so edits in stream-settings.html appear live.
+
+function useStreamSettings() {
+  const read = () => ({
+    title: localStorage.getItem('stream_title') || '',
+    schedule: (() => {
+      try { return JSON.parse(localStorage.getItem('stream_schedule') || 'null') || []; }
+      catch { return []; }
+    })(),
+  });
+
+  const [settings, setSettings] = React.useState(read);
+
+  React.useEffect(() => {
+    const id = setInterval(() => setSettings(read()), 5000);
+    const onStorage = () => setSettings(read());
+    window.addEventListener('storage', onStorage);
+    return () => { clearInterval(id); window.removeEventListener('storage', onStorage); };
+  }, []);
+
+  return settings;
+}
+
+Object.assign(window, { COLORS, CornerBracket, VKanji, Seal, LiveDot, SeigaihaTexture, Pill, FeedPlaceholder, useTwitchData, useTwitchChat, useSpotify, SpotifyNowPlaying, TwitchSetupBanner, useStreamSettings });

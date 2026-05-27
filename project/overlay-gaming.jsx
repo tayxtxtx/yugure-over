@@ -16,12 +16,7 @@ function GamingOverlay({ obs = false } = {}) {
   const allEvents = React.useMemo(() => {
     const combined = [...twitch.events, ...bitsEvents];
     combined.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-    return combined.length ? combined.slice(0, 6) : [
-      { kind: 'SUB',    who: 'tsuki_no_yoru', note: 'tier 1 · resub × 12 · nyaa' },
-      { kind: 'BITS',   who: 'kage_main',     note: '500 bits — "two tails for luck"' },
-      { kind: 'RAID',   who: 'shoryuken_jp',  note: 'incoming 87 prowlers' },
-      { kind: 'FOLLOW', who: 'midori_neko',   note: 'one of us — 仲間' },
-    ];
+    return combined.slice(0, 6);
   }, [twitch.events, bitsEvents]);
 
   const pct = (goal.cur / goal.max) * 100;
@@ -176,7 +171,14 @@ function GamingOverlay({ obs = false } = {}) {
           }}>live feed</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {allEvents.map((e, i) => (
+          {allEvents.length === 0 ? (
+            <div style={{
+              padding: '18px',
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: 10, letterSpacing: 2,
+              color: 'rgba(244,236,216,0.2)',
+            }}>no events yet</div>
+          ) : allEvents.map((e, i) => (
             <div key={i} style={{
               padding: '12px 18px',
               borderBottom: i === allEvents.length - 1 ? 'none' : '1px solid rgba(244,236,216,0.06)',

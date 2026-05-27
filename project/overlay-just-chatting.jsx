@@ -4,12 +4,9 @@
 function JustChattingOverlay({ obs = false } = {}) {
   const twitch = useTwitchData();
   const { messages: liveChat, bitsEvents } = useTwitchChat();
+  const settings = useStreamSettings();
 
-  const mockEvents = [
-    { kind: 'FOLLOW', who: 'shibata_q',   note: 'caught the prowl' },
-    { kind: 'SUB',    who: 'ame_drop',    note: 'tier 2 · 4 mo · nyaa' },
-    { kind: 'TIP',    who: 'kage_main',   note: '¥ 1,500 — "tuna fund"' },
-  ];
+  const streamTitle = settings.title || 'Tail-flicks, vinyl & weekly mews';
 
   const displayChat = liveChat.length > 0 ? liveChat.slice(-8) : [
     { user: 'kage_main',     color: '#6cd6e4', msg: 'GM ☕ the twin tails are FLOOFY today' },
@@ -25,7 +22,7 @@ function JustChattingOverlay({ obs = false } = {}) {
   const allEvents = React.useMemo(() => {
     const combined = [...twitch.events, ...bitsEvents];
     combined.sort((a, b) => (b.ts || 0) - (a.ts || 0));
-    return combined.length > 0 ? combined.slice(0, 3) : mockEvents;
+    return combined.slice(0, 3);
   }, [twitch.events, bitsEvents]);
 
   return (
@@ -85,7 +82,7 @@ function JustChattingOverlay({ obs = false } = {}) {
             fontWeight: 700,
             letterSpacing: -0.5,
             lineHeight: 1.1,
-          }}>Tail-flicks, vinyl & weekly mews</div>
+          }}>{streamTitle}</div>
         </div>
       </div>
 
@@ -119,17 +116,17 @@ function JustChattingOverlay({ obs = false } = {}) {
       {/* Vertical kanji */}
       <VKanji top={140} right={48} fontSize={28} chars={['夕','暮','翳']} small="STREAMING · LIVE" />
 
-      {/* SPOTIFY NOW PLAYING — above chat panel */}
+      {/* SPOTIFY NOW PLAYING — below chat panel */}
       <SpotifyNowPlaying style={{
         position: 'absolute',
-        right: 110, top: 930,
+        right: 110, top: 940,
         width: 420,
       }} />
 
       {/* CHAT PANEL — right side */}
       <div style={{
         position: 'absolute',
-        right: 110, top: 230, width: 420, height: 700,
+        right: 110, top: 130, width: 420, height: 800,
         background: 'linear-gradient(180deg, rgba(13,21,48,0.88) 0%, rgba(20,25,55,0.75) 100%)',
         border: '1px solid rgba(244,236,216,0.12)',
         backdropFilter: 'blur(10px)',
@@ -208,12 +205,19 @@ function JustChattingOverlay({ obs = false } = {}) {
           paddingRight: 24,
           borderRight: '1px solid rgba(244,236,216,0.18)',
           display: 'flex', alignItems: 'center', gap: 10,
+          flexShrink: 0,
         }}>
           <span style={{ fontSize: 12, fontFamily: '"JetBrains Mono", monospace', color: COLORS.cyan, letterSpacing: 2 }}>妖 · YOKAI</span>
           recent
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 36, flex: 1, overflow: 'hidden' }}>
-          {allEvents.map((e, i) => (
+          {allEvents.length === 0 ? (
+            <span style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: 10, letterSpacing: 2,
+              color: 'rgba(244,236,216,0.2)',
+            }}>no events yet</span>
+          ) : allEvents.map((e, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, whiteSpace: 'nowrap' }}>
               <Pill
                 size="sm"
@@ -233,6 +237,7 @@ function JustChattingOverlay({ obs = false } = {}) {
           letterSpacing: 2,
           color: 'rgba(244,236,216,0.55)',
           display: 'flex', alignItems: 'center', gap: 12,
+          flexShrink: 0,
         }}>
           <span>twitch / yugurekageri</span>
           <span style={{ width: 4, height: 4, background: COLORS.gold, borderRadius: '50%' }}></span>

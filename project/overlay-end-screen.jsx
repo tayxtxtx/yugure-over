@@ -37,8 +37,6 @@ function EndScreenOverlay() {
 
   const nextStream = settings.schedule[0] || null;
 
-  const raidTarget = { name: 'shoryuken_jp', tag: '@shoryuken_jp', topic: 'rhythm + fight game co-stream' };
-
   return (
     <div style={{
       position: 'relative',
@@ -163,7 +161,7 @@ function EndScreenOverlay() {
         </div>
       </div>
 
-      {/* BOTTOM: socials + raid teaser */}
+      {/* BOTTOM: socials */}
       <div style={{
         position: 'absolute',
         left: 100, bottom: 80,
@@ -172,46 +170,6 @@ function EndScreenOverlay() {
         gap: 18,
         alignItems: 'stretch',
       }}>
-        {/* Raid card */}
-        <div style={{
-          background: 'rgba(13,21,48,0.78)',
-          border: `1px solid rgba(230,181,88,0.4)`,
-          padding: '18px 22px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 18,
-          flex: 1,
-        }}>
-          <div style={{
-            width: 48, height: 48,
-            background: 'linear-gradient(135deg, #2b2f6e, #14193d)',
-            border: `1px solid rgba(230,181,88,0.55)`,
-            display: 'grid', placeItems: 'center',
-            color: COLORS.gold,
-            fontFamily: '"Shippori Mincho", serif',
-            fontWeight: 800,
-            fontSize: 22,
-          }}>潮</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{
-              fontFamily: '"JetBrains Mono", monospace',
-              fontSize: 10, letterSpacing: 3,
-              color: COLORS.cyan,
-            }}>RAIDING  ·  突 撃</span>
-            <span style={{
-              fontFamily: '"Shippori Mincho", serif',
-              fontSize: 22, fontWeight: 700,
-              color: COLORS.paper,
-              lineHeight: 1.1,
-            }}>{raidTarget.tag}</span>
-            <span style={{
-              fontFamily: '"Manrope", sans-serif',
-              fontSize: 12,
-              color: 'rgba(244,236,216,0.55)',
-            }}>now streaming · {raidTarget.topic}</span>
-          </div>
-        </div>
-
         {/* Socials block */}
         <div style={{
           background: 'rgba(13,21,48,0.78)',
@@ -220,7 +178,7 @@ function EndScreenOverlay() {
           display: 'flex',
           alignItems: 'center',
           gap: 24,
-          flex: 1.4,
+          flex: 1,
         }}>
           <span style={{
             fontFamily: '"JetBrains Mono", monospace',

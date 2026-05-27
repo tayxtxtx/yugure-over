@@ -12,7 +12,7 @@ function GamingOverlay({ obs = false } = {}) {
   const subDisplay = twitch.subDelta != null ? '+' + twitch.subDelta : '—';
   const gameName = twitch.gameName || 'Elden Ring — Shadow of the Erdtree';
   const liveTime = twitch.uptime;
-  const goal = twitch.goal || { label: 'Shamisen sub goal', cur: 318, max: 500 };
+  const goal = twitch.goal || null;
 
   const allEvents = React.useMemo(() => {
     const combined = [...twitch.events, ...bitsEvents];
@@ -20,7 +20,7 @@ function GamingOverlay({ obs = false } = {}) {
     return combined.slice(0, 6);
   }, [twitch.events, bitsEvents]);
 
-  const pct = (goal.cur / goal.max) * 100;
+  const pct = goal ? (goal.cur / goal.max) * 100 : 0;
 
   return (
     <div style={{
@@ -219,7 +219,7 @@ function GamingOverlay({ obs = false } = {}) {
       </div>
 
       {/* ===== BOTTOM: GOAL BAR ===== */}
-      <div style={{
+      {goal && <div style={{
         position: 'absolute',
         left: 440, bottom: 50,
         right: 60,
@@ -304,7 +304,7 @@ function GamingOverlay({ obs = false } = {}) {
             color: 'rgba(244,236,216,0.5)',
           }}>{pct.toFixed(1)}% · NEXT REWARD</div>
         </div>
-      </div>
+      </div>}
 
       {/* Page-level corners */}
       <CornerBracket pos="tl" />

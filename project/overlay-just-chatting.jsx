@@ -8,16 +8,7 @@ function JustChattingOverlay({ obs = false } = {}) {
 
   const streamTitle = settings.title || 'Tail-flicks, vinyl & weekly mews';
 
-  const displayChat = liveChat.length > 0 ? liveChat.slice(-8) : [
-    { user: 'kage_main',     color: '#6cd6e4', msg: 'GM ☕ the twin tails are FLOOFY today' },
-    { user: 'tsuki_no_yoru', color: '#e6b558', msg: 'shamisen cover when' },
-    { user: 'oceanic_mango', color: '#a78bff', msg: 'play the cat scratch loop pls' },
-    { user: 'kage_main',     color: '#6cd6e4', msg: 'are we doing karaoke tomorrow??' },
-    { user: 'ravewren',      color: '#ff8aa6', msg: 'first time catching a nekomata live, hi!' },
-    { user: 'midori_neko',   color: '#8fb09a', msg: '夕暮さんにゃーー' },
-    { user: 'kanji_kid',     color: '#e6b558', msg: 'pls play DLC pls play DLC' },
-    { user: 'lo_fi_loner',   color: '#9fe4ec', msg: 'this BGM ♪ goes hard' },
-  ];
+  const displayChat = liveChat.slice(-8);
 
   const allEvents = React.useMemo(() => {
     const combined = [...twitch.events, ...bitsEvents];
@@ -208,7 +199,7 @@ function JustChattingOverlay({ obs = false } = {}) {
           flexShrink: 0,
         }}>
           <span style={{ fontSize: 12, fontFamily: '"JetBrains Mono", monospace', color: COLORS.cyan, letterSpacing: 2 }}>妖 · YOKAI</span>
-          <span style={{ position: 'relative', top: -5 }}>recent</span>
+          <span style={{ position: 'relative', top: -7 }}>recent</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 36, flex: 1, overflow: 'hidden' }}>
           {allEvents.length === 0 ? (

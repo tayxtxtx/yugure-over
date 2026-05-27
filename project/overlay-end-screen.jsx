@@ -266,7 +266,7 @@ function EndScreenOverlay() {
           fontFamily: '"JetBrains Mono", monospace',
           fontSize: 11, letterSpacing: 2,
           color: 'rgba(244,236,216,0.55)',
-        }}>21:00 JST  ·  in 2d 14h</span>
+        }}>{nextStream.time ? `${nextStream.time} JST` : nextStream.date ? nextStream.date : 'time TBD'}{nextStream.note ? `  ·  ${nextStream.note}` : ''}</span>
       </div>
       )}
 

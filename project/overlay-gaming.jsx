@@ -84,13 +84,15 @@ function GamingOverlay({ obs = false } = {}) {
               fontSize: 22,
               fontWeight: 700,
               lineHeight: 1,
-            }}>{gameName}</div>
+            }}>{settings.title || gameName}</div>
+            {(settings.note || (!settings.title && !settings.note)) && (
             <div style={{
               fontFamily: '"JetBrains Mono", monospace',
               fontSize: 10,
               letterSpacing: 2,
               color: 'rgba(244,236,216,0.5)',
-            }}>{settings.title || 'NG+2  ·  DEATH 47  ·  TAILS UP'}</div>
+            }}>{settings.note || 'NG+2  ·  DEATH 47  ·  TAILS UP'}</div>
+            )}
           </div>
         </div>
 

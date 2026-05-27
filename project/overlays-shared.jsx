@@ -600,6 +600,7 @@ function TwitchSetupBanner({ show }) {
 function useStreamSettings() {
   const read = () => ({
     title: localStorage.getItem('stream_title') || '',
+    note: localStorage.getItem('stream_note') || '',
     schedule: (() => {
       try { return JSON.parse(localStorage.getItem('stream_schedule') || 'null') || []; }
       catch { return []; }

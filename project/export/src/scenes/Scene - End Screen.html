@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Scene · End Screen — Yugure Kageri</title>
+<meta name="ext-resource-dependency" content="assets/character.png" data-resource-id="character" />
+<template id="__bundler_thumbnail" data-bg-color="#0d1530">
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14193d"/>
+      <stop offset="1" stop-color="#0a1130"/>
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" fill="url(#bg)"/>
+  <circle cx="100" cy="100" r="46" fill="none" stroke="#e6b558" stroke-width="2"/>
+  <circle cx="100" cy="100" r="54" fill="none" stroke="#6cd6e4" stroke-width="1" stroke-dasharray="3 4" opacity="0.55"/>
+  <text x="100" y="113" text-anchor="middle" font-family="serif" font-size="44" font-weight="700" fill="#f4ecd8">夕</text>
+</svg>
+</template>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700;800&display=swap&text=%E5%A4%95%E6%9A%AE%E7%BF%B3%E6%9C%88%E7%81%AB%E6%B0%B4%E6%9C%A8%E9%87%91%E5%9C%9F%E6%97%A5%E9%9B%91%E8%AB%87%E4%BA%8C%E5%B0%BE%E5%A6%96%E9%80%B2%E8%A1%8C%E4%B8%AD%E9%85%8D%E4%BF%A1%E7%9B%AE%E6%A8%99%E6%9C%80%E8%BF%91%E4%BB%B2%E9%96%93%E6%88%A6%E9%AD%82%E9%81%8A%E7%B5%82%E4%BA%86%E7%AA%81%E6%92%83%E6%9D%A5%E9%80%B1%E5%A4%9A%E8%AC%9D%E6%9C%AC%E6%97%A5%E6%99%82%E9%96%93%E9%A0%82%E7%82%B9%E8%BF%BD%E5%8A%A0%E4%BC%9A%E5%93%A1%E7%8C%AB%E5%8F%88%E8%B5%B7%E3%81%8D%E3%82%8B%E3%82%82%E3%81%AA%E3%81%8F%E4%BA%88%E5%AE%9A%E6%9C%8D%E8%92%BC%E6%BD%AE%E5%A0%B4%E9%9D%A2%E9%96%93%E5%85%88ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%20%C2%B7%E2%80%94%E2%80%93-%26%3A%2B%2F.%2C'%22()%5B%5D%3F!%40%23%24%25*%3C%3E " rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600&family=JetBrains+Mono:wght@500&display=swap&display=swap" rel="stylesheet" />
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    background: #07091a;
+    overflow: hidden;
+    font-family: 'Manrope', system-ui, sans-serif;
+    color: #f4ecd8;
+  }
+  #stage-wrap {
+    position: fixed; inset: 0;
+    display: grid;
+    place-items: center;
+    background: #07091a;
+  }
+  #stage {
+    width: 1920px;
+    height: 1080px;
+    transform-origin: center center;
+    position: relative;
+  }
+  @keyframes livePulse {
+    0%, 100% { box-shadow: 0 0 12px #ff5b5b, 0 0 0 4px rgba(255,91,91,0.18); }
+    50%      { box-shadow: 0 0 18px #ff5b5b, 0 0 0 7px rgba(255,91,91,0.05); }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage-wrap"><div id="stage"></div></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="overlays-shared.jsx"></script>
+<script type="text/babel" src="overlay-end-screen.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+  ReactDOM.createRoot(document.getElementById('stage'))
+    .render(<window.EndScreenOverlay />);
+
+  // Fit-to-window scale (browser preview).
+  // OBS browser sources sized to 1920×1080 will hit scale = 1.
+  function scaleStage() {
+    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    document.getElementById('stage').style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', scaleStage);
+  scaleStage();
+</script>
+
+</body>
+</html>

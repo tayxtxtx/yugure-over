@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Scene · Starting Soon — Yugure Kageri</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700;800&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    background: #07091a;
+    overflow: hidden;
+    font-family: 'Manrope', system-ui, sans-serif;
+    color: #f4ecd8;
+  }
+  #stage-wrap {
+    position: fixed; inset: 0;
+    display: grid;
+    place-items: center;
+    background: #07091a;
+  }
+  #stage {
+    width: 1920px;
+    height: 1080px;
+    transform-origin: center center;
+    position: relative;
+  }
+  @keyframes livePulse {
+    0%, 100% { box-shadow: 0 0 12px #ff5b5b, 0 0 0 4px rgba(255,91,91,0.18); }
+    50%      { box-shadow: 0 0 18px #ff5b5b, 0 0 0 7px rgba(255,91,91,0.05); }
+  }
+</style>
+</head>
+<body>
+
+<div id="stage-wrap"><div id="stage"></div></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="overlays-shared.jsx"></script>
+<script type="text/babel" src="overlay-starting-soon.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+  ReactDOM.createRoot(document.getElementById('stage'))
+    .render(<window.StartingSoonOverlay />);
+
+  // Fit-to-window scale (browser preview).
+  // OBS browser sources sized to 1920×1080 will hit scale = 1.
+  function scaleStage() {
+    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    document.getElementById('stage').style.transform = 'scale(' + s + ')';
+  }
+  window.addEventListener('resize', scaleStage);
+  scaleStage();
+</script>
+
+</body>
+</html>

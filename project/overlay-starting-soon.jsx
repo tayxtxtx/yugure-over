@@ -11,17 +11,8 @@ function StartingSoonOverlay() {
   const mm = String(Math.floor(secs / 60)).padStart(2, '0');
   const ss = String(secs % 60).padStart(2, '0');
 
-  const schedulePeek = React.useMemo(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('stream_schedule') || 'null');
-      if (Array.isArray(saved) && saved.length) return saved;
-    } catch {}
-    return [
-      { day: 'TUE', jp: '火', game: 'Horror Night · Faith III' },
-      { day: 'WED', jp: '水', game: 'Lo-fi & Karaoke' },
-      { day: 'FRI', jp: '金', game: 'Elden Ring DLC · Boss Rush' },
-    ];
-  }, []);
+  const settings = useStreamSettings();
+  const schedulePeek = settings.schedule.slice(0, 3);
 
   return (
     <div style={{
@@ -141,6 +132,7 @@ function StartingSoonOverlay() {
       </div>
 
       {/* BOTTOM — schedule preview */}
+      {schedulePeek.length > 0 && (
       <div style={{
         position: 'absolute',
         left: 100, bottom: 90,
@@ -188,6 +180,7 @@ function StartingSoonOverlay() {
           ))}
         </div>
       </div>
+      )}
 
       {/* Vertical kanji + social block */}
       <VKanji top={80} right={48} chars={['夕','暮','翳']} small="LIVE · @yugurekageri" fontSize={30} />

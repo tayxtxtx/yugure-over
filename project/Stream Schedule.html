@@ -293,6 +293,9 @@
       linear-gradient(180deg, rgba(60,48,120,0.72) 0%, rgba(30,28,75,0.85) 100%);
     border-color: rgba(230,181,88,0.4);
     grid-column: span 2;
+    grid-template-columns: 78px 1fr auto;
+  }
+  .card.featured.has-ribbon {
     grid-template-columns: 78px 1fr 130px auto;
   }
   .card.featured::before {
@@ -300,6 +303,16 @@
     width: 3px;
   }
   .card.featured .activity { font-size: 26px; }
+
+  /* Small special star badge */
+  .card.special-star::after {
+    content: "★";
+    position: absolute;
+    top: 10px; right: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--gold);
+    opacity: 0.9;
+  }
   .card.featured .ribbon {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
@@ -541,123 +554,7 @@
         <span>SUB ONLY · <b>NONE</b></span>
       </div>
 
-      <div class="schedule">
-
-        <!-- MON -->
-        <div class="card">
-          <div class="day-block">
-            <div class="day-en">MON</div>
-            <div class="day-jp">月</div>
-            <div class="day-date">05 / 25</div>
-          </div>
-          <div class="content-block">
-            <div class="activity">Just Chatting</div>
-            <div class="activity-sub">Week kickoff · plans &amp; tea</div>
-          </div>
-          <div class="time-block">
-            <div class="time">20:00</div>
-            <div class="tz">~90 MIN</div>
-          </div>
-        </div>
-
-        <!-- TUE -->
-        <div class="card">
-          <div class="day-block">
-            <div class="day-en">TUE</div>
-            <div class="day-jp">火</div>
-            <div class="day-date">05 / 26</div>
-          </div>
-          <div class="content-block">
-            <div class="activity">Horror Night</div>
-            <div class="activity-sub">Faith: The Unholy Trinity</div>
-          </div>
-          <div class="time-block">
-            <div class="time">22:00</div>
-            <div class="tz">LATE</div>
-          </div>
-        </div>
-
-        <!-- WED -->
-        <div class="card">
-          <div class="day-block">
-            <div class="day-en">WED</div>
-            <div class="day-jp">水</div>
-            <div class="day-date">05 / 27</div>
-          </div>
-          <div class="content-block">
-            <div class="activity">Lo-fi &amp; Karaoke</div>
-            <div class="activity-sub">Acoustic set · taking requests</div>
-          </div>
-          <div class="time-block">
-            <div class="time">21:00</div>
-            <div class="tz">CHILL</div>
-          </div>
-        </div>
-
-        <!-- THU - off -->
-        <div class="card off">
-          <div class="day-block">
-            <div class="day-en">THU</div>
-            <div class="day-jp">木</div>
-            <div class="day-date">05 / 28</div>
-          </div>
-          <div class="content-block">
-            <div class="activity">— off day —</div>
-            <div class="activity-sub">Recharge · see you tomorrow</div>
-          </div>
-        </div>
-
-        <!-- FRI - featured -->
-        <div class="card featured">
-          <div class="day-block">
-            <div class="day-en">FRI</div>
-            <div class="day-jp">金</div>
-            <div class="day-date">05 / 29</div>
-          </div>
-          <div class="content-block">
-            <div class="activity">Elden Ring DLC · Boss Rush</div>
-            <div class="activity-sub">Long stream · subgoal at 500 · giveaway codes</div>
-          </div>
-          <div class="ribbon">★ Special</div>
-          <div class="time-block">
-            <div class="time">19:30</div>
-            <div class="tz">4+ HRS</div>
-          </div>
-        </div>
-
-        <!-- SAT -->
-        <div class="card">
-          <div class="day-block">
-            <div class="day-en">SAT</div>
-            <div class="day-jp">土</div>
-            <div class="day-date">05 / 30</div>
-          </div>
-          <div class="content-block">
-            <div class="activity">Collab — Mystery Guest</div>
-            <div class="activity-sub">Co-op party games</div>
-          </div>
-          <div class="time-block">
-            <div class="time">21:00</div>
-            <div class="tz">~3 HRS</div>
-          </div>
-        </div>
-
-        <!-- SUN -->
-        <div class="card">
-          <div class="day-block">
-            <div class="day-en">SUN</div>
-            <div class="day-jp">日</div>
-            <div class="day-date">05 / 31</div>
-          </div>
-          <div class="content-block">
-            <div class="activity">Members Cinema</div>
-            <div class="activity-sub">Watch-along · tier 1+</div>
-          </div>
-          <div class="time-block">
-            <div class="time">20:00</div>
-            <div class="tz">COMFY</div>
-          </div>
-        </div>
+      <div class="schedule" id="schedule-grid">
       </div>
 
       <div class="footer">
@@ -686,14 +583,14 @@
       </div>
 
       <div class="char-wrap">
-        <img class="char" src="assets/character.png" alt="Yugure Kageri" />
+        <img class="char" id="char-img" src="assets/character.png" alt="Yugure Kageri" />
       </div>
 
       <div class="info-card">
         <div class="live-dot"></div>
         <div class="info-text">
           <div class="info-label">NEXT STREAM</div>
-          <div class="info-value">Wed · Lo-fi &amp; Karaoke · 21:00 JST</div>
+          <div class="info-value" id="info-value">Wed · Lo-fi &amp; Karaoke · 21:00 JST</div>
         </div>
       </div>
 
@@ -703,7 +600,94 @@
 </div>
 
 <script>
-  // Auto-scale stage to viewport
+  const ALL_DAYS = [
+    { day:'MON', jp:'月' }, { day:'TUE', jp:'火' }, { day:'WED', jp:'水' },
+    { day:'THU', jp:'木' }, { day:'FRI', jp:'金' }, { day:'SAT', jp:'土' },
+    { day:'SUN', jp:'日' },
+  ];
+
+  function render() {
+    const schedData = (() => { try { return JSON.parse(localStorage.getItem('stream_schedule')||'[]')||[]; } catch { return []; } })();
+    const charUrl  = localStorage.getItem('stream_character_url') || '';
+    const charHide = localStorage.getItem('stream_character_hide') === 'true';
+
+    // Character image
+    const charImg = document.getElementById('char-img');
+    if (charHide) {
+      charImg.style.display = 'none';
+    } else {
+      charImg.style.display = '';
+      charImg.src = charUrl || 'assets/character.png';
+    }
+
+    // Info card — first scheduled item
+    const first = schedData[0];
+    const infoEl = document.getElementById('info-value');
+    if (first) {
+      infoEl.textContent = [first.day, first.game, first.time].filter(Boolean).join(' · ');
+    } else {
+      infoEl.textContent = '—';
+    }
+
+    // Schedule grid — always show all 7 days
+    const grid = document.getElementById('schedule-grid');
+    grid.innerHTML = '';
+
+    ALL_DAYS.forEach(({ day, jp }) => {
+      const item = schedData.find(s => (s.day||'').toUpperCase() === day);
+      const card = document.createElement('div');
+
+      if (!item) {
+        card.className = 'card off';
+        card.innerHTML = `
+          <div class="day-block">
+            <div class="day-en">${day}</div>
+            <div class="day-jp">${jp}</div>
+          </div>
+          <div class="content-block">
+            <div class="activity">— off day —</div>
+            <div class="activity-sub">Recharge · see you tomorrow</div>
+          </div>`;
+      } else {
+        const isFeat = !!item.featured;
+        const isSpec = !!item.special;
+        const hasRibbon = isFeat && isSpec;
+        const classes = ['card'];
+        if (isFeat) classes.push('featured');
+        if (hasRibbon) classes.push('has-ribbon');
+        if (isSpec && !isFeat) classes.push('special-star');
+        card.className = classes.join(' ');
+
+        const dateHTML = item.date ? `<div class="day-date">${item.date}</div>` : '';
+        const subHTML  = item.sub  ? `<div class="activity-sub">${item.sub}</div>` : '';
+        const ribbonHTML = hasRibbon ? `<div class="ribbon">★ Special</div>` : '';
+        const timeHTML = (item.time || item.note) ? `
+          <div class="time-block">
+            ${item.time ? `<div class="time">${item.time}</div>` : ''}
+            ${item.note ? `<div class="tz">${item.note}</div>` : ''}
+          </div>` : '';
+
+        card.innerHTML = `
+          <div class="day-block">
+            <div class="day-en">${item.day||day}</div>
+            <div class="day-jp">${item.jp||jp}</div>
+            ${dateHTML}
+          </div>
+          <div class="content-block">
+            <div class="activity">${item.game||''}</div>
+            ${subHTML}
+          </div>
+          ${ribbonHTML}
+          ${timeHTML}`;
+      }
+      grid.appendChild(card);
+    });
+  }
+
+  render();
+  setInterval(render, 5000);
+  window.addEventListener('storage', render);
+
   function scale() {
     const stage = document.getElementById('stage');
     const sx = window.innerWidth / 1920;

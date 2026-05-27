@@ -13,6 +13,8 @@ function EndScreenOverlay() {
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
   }, [twitch.uptime]);
 
+  const settings = useStreamSettings();
+
   const peakViewers = localStorage.getItem('stream_peak_viewers');
   const startFollowers = Number(localStorage.getItem('stream_start_followers') || 0);
   const startSubs = Number(localStorage.getItem('stream_start_subs') || 0);
@@ -33,13 +35,7 @@ function EndScreenOverlay() {
       unit: 'today', accent: COLORS.cyan },
   ];
 
-  const nextStream = React.useMemo(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('stream_schedule') || 'null');
-      if (Array.isArray(saved) && saved.length) return saved[0];
-    } catch {}
-    return { day: 'WED', jp: '水', game: 'Lo-fi & Karaoke' };
-  }, []);
+  const nextStream = settings.schedule[0] || null;
 
   const raidTarget = { name: 'shoryuken_jp', tag: '@shoryuken_jp', topic: 'rhythm + fight game co-stream' };
 
@@ -243,6 +239,7 @@ function EndScreenOverlay() {
       </div>
 
       {/* Next stream chip — top right under kanji */}
+      {nextStream && (
       <div style={{
         position: 'absolute',
         right: 130, top: 110,
@@ -271,6 +268,7 @@ function EndScreenOverlay() {
           color: 'rgba(244,236,216,0.55)',
         }}>21:00 JST  ·  in 2d 14h</span>
       </div>
+      )}
 
       {/* Vertical kanji */}
       <VKanji top={310} right={56} chars={['夕','暮','翳']} small="THANK · YOU" fontSize={32} />

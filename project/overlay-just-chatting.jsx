@@ -116,11 +116,11 @@ function JustChattingOverlay({ obs = false } = {}) {
       {/* Vertical kanji */}
       <VKanji top={140} right={48} fontSize={28} chars={['夕','暮','翳']} small="STREAMING · LIVE" />
 
-      {/* SPOTIFY NOW PLAYING — below chat panel */}
+      {/* SPOTIFY NOW PLAYING — right of title banner */}
       <SpotifyNowPlaying style={{
         position: 'absolute',
-        right: 110, top: 940,
-        width: 420,
+        left: 760, top: 36,
+        width: 380,
       }} />
 
       {/* CHAT PANEL — right side */}

@@ -5,6 +5,7 @@
 function GamingOverlay({ obs = false } = {}) {
   const twitch = useTwitchData();
   const { bitsEvents } = useTwitchChat();
+  const settings = useStreamSettings();
 
   const viewerCount = twitch.viewerCount != null ? twitch.viewerCount.toLocaleString() : '—';
   const followDisplay = twitch.followerDelta != null ? '+' + twitch.followerDelta : '—';
@@ -89,7 +90,7 @@ function GamingOverlay({ obs = false } = {}) {
               fontSize: 10,
               letterSpacing: 2,
               color: 'rgba(244,236,216,0.5)',
-            }}>NG+2  ·  DEATH 47  ·  TAILS UP</div>
+            }}>{settings.title || 'NG+2  ·  DEATH 47  ·  TAILS UP'}</div>
           </div>
         </div>
 

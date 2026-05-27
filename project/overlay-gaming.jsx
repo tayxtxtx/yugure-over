@@ -1,16 +1,29 @@
 // Gaming overlay — 1920x1080
-// Gameplay fills the whole frame; webcam in a circular ring frame bottom-left;
-// HUD strips top-left & top-right; goal bar + event ticker bottom
+// Gameplay fills the whole frame; HUD strips top-left & top-right;
+// goal bar + event ticker bottom; Spotify now-playing bottom-left
 
 function GamingOverlay({ obs = false } = {}) {
-  const events = [
-    { kind: 'SUB',    who: 'tsuki_no_yoru', note: 'tier 1 · resub × 12 · nyaa' },
-    { kind: 'BITS',   who: 'kage_main',     note: '500 bits — "two tails for luck"' },
-    { kind: 'RAID',   who: 'shoryuken_jp',  note: 'incoming 87 prowlers' },
-    { kind: 'FOLLOW', who: 'midori_neko',   note: 'one of us — 仲間' },
-  ];
+  const twitch = useTwitchData();
+  const { bitsEvents } = useTwitchChat();
 
-  const goal = { label: 'Shamisen sub goal', cur: 318, max: 500 };
+  const viewerCount = twitch.viewerCount != null ? twitch.viewerCount.toLocaleString() : '—';
+  const followDisplay = twitch.followerDelta != null ? '+' + twitch.followerDelta : '—';
+  const subDisplay = twitch.subDelta != null ? '+' + twitch.subDelta : '—';
+  const gameName = twitch.gameName || 'Elden Ring — Shadow of the Erdtree';
+  const liveTime = twitch.uptime;
+  const goal = twitch.goal || { label: 'Shamisen sub goal', cur: 318, max: 500 };
+
+  const allEvents = React.useMemo(() => {
+    const combined = [...twitch.events, ...bitsEvents];
+    combined.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    return combined.length ? combined.slice(0, 6) : [
+      { kind: 'SUB',    who: 'tsuki_no_yoru', note: 'tier 1 · resub × 12 · nyaa' },
+      { kind: 'BITS',   who: 'kage_main',     note: '500 bits — "two tails for luck"' },
+      { kind: 'RAID',   who: 'shoryuken_jp',  note: 'incoming 87 prowlers' },
+      { kind: 'FOLLOW', who: 'midori_neko',   note: 'one of us — 仲間' },
+    ];
+  }, [twitch.events, bitsEvents]);
+
   const pct = (goal.cur / goal.max) * 100;
 
   return (
@@ -75,7 +88,7 @@ function GamingOverlay({ obs = false } = {}) {
               fontSize: 22,
               fontWeight: 700,
               lineHeight: 1,
-            }}>Elden Ring — Shadow of the Erdtree</div>
+            }}>{gameName}</div>
             <div style={{
               fontFamily: '"JetBrains Mono", monospace',
               fontSize: 10,
@@ -108,7 +121,7 @@ function GamingOverlay({ obs = false } = {}) {
               fontFamily: '"JetBrains Mono", monospace',
               fontSize: 10, letterSpacing: 2,
               color: 'rgba(244,236,216,0.55)',
-            }}>04:12:55</span>
+            }}>{liveTime}</span>
           </div>
         </div>
       </div>
@@ -122,98 +135,19 @@ function GamingOverlay({ obs = false } = {}) {
         backdropFilter: 'blur(10px)',
         border: '1px solid rgba(244,236,216,0.12)',
       }}>
-        <Stat label="VIEWERS" value="2,140" accent={COLORS.cyan} />
-        <Stat label="FOLLOWS" value="+38" accent={COLORS.gold} />
-        <Stat label="SUBS" value="+12" accent="#ff8aa6" last />
+        <Stat label="VIEWERS" value={viewerCount} accent={COLORS.cyan} />
+        <Stat label="FOLLOWS" value={followDisplay} accent={COLORS.gold} />
+        <Stat label="SUBS" value={subDisplay} accent="#ff8aa6" last />
       </div>
 
       <VKanji top={210} right={56} fontSize={32} chars={['夕','暮','翳']} small="LIVE · 配 信 中" />
 
-      {/* ===== WEBCAM RING FRAME — bottom left ===== */}
-      <div style={{
+      {/* ===== SPOTIFY NOW PLAYING — bottom left ===== */}
+      <SpotifyNowPlaying style={{
         position: 'absolute',
-        left: 60, bottom: 130,
-        width: 340, height: 340,
-      }}>
-        {/* outer dashed ring */}
-        <div style={{
-          position: 'absolute',
-          inset: -20,
-          borderRadius: '50%',
-          border: `1px dashed rgba(244,236,216,0.18)`,
-        }} />
-        {/* gold ring */}
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: '50%',
-          border: `1.5px solid ${COLORS.gold}`,
-          boxShadow: `0 0 24px rgba(108,214,228,0.18), inset 0 0 0 1px rgba(13,21,48,0.5)`,
-        }} />
-        {/* webcam placeholder */}
-        <div style={{
-          position: 'absolute',
-          inset: 8,
-          borderRadius: '50%',
-          background:
-            'repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0 12px, rgba(255,255,255,0) 12px 24px),' +
-            'rgba(8,12,30,0.7)',
-          display: 'grid',
-          placeItems: 'center',
-          color: 'rgba(244,236,216,0.55)',
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: 11,
-          letterSpacing: 3,
-          textAlign: 'center',
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <span style={{ color: 'rgba(244,236,216,0.7)', fontSize: 13 }}>CAM</span>
-            <span style={{ fontSize: 9, color: 'rgba(244,236,216,0.4)' }}>round mask</span>
-          </div>
-        </div>
-        {/* tick marks at 12/3/6/9 */}
-        {[0, 90, 180, 270].map(deg => (
-          <div key={deg} style={{
-            position: 'absolute',
-            left: '50%', top: '50%',
-            width: 2, height: 12,
-            background: COLORS.gold,
-            transformOrigin: '50% 178px',
-            transform: `translate(-50%, -50%) rotate(${deg}deg) translateY(-178px)`,
-          }} />
-        ))}
-
-        {/* Streamer name plate below ring */}
-        <div style={{
-          position: 'absolute',
-          left: '50%',
-          top: 'calc(100% + 14px)',
-          transform: 'translateX(-50%)',
-          background: 'rgba(13,21,48,0.88)',
-          padding: '8px 18px',
-          borderLeft: `2px solid ${COLORS.gold}`,
-          borderRight: `2px solid ${COLORS.gold}`,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 2,
-          whiteSpace: 'nowrap',
-        }}>
-          <div style={{
-            fontFamily: '"Shippori Mincho", serif',
-            fontWeight: 700,
-            fontSize: 18,
-            color: COLORS.paper,
-            letterSpacing: 0.5,
-          }}>Yugure Kageri</div>
-          <div style={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: 10,
-            letterSpacing: 3,
-            color: COLORS.cyan,
-          }}>夕 暮 翳  ·  @yugurekageri</div>
-        </div>
-      </div>
+        left: 60, bottom: 145,
+        minWidth: 300, maxWidth: 400,
+      }} />
 
       {/* ===== RIGHT-SIDE: EVENT FEED ===== */}
       <div style={{
@@ -242,10 +176,10 @@ function GamingOverlay({ obs = false } = {}) {
           }}>live feed</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          {events.map((e, i) => (
+          {allEvents.map((e, i) => (
             <div key={i} style={{
               padding: '12px 18px',
-              borderBottom: i === events.length - 1 ? 'none' : '1px solid rgba(244,236,216,0.06)',
+              borderBottom: i === allEvents.length - 1 ? 'none' : '1px solid rgba(244,236,216,0.06)',
               display: 'flex', alignItems: 'center', gap: 12,
             }}>
               <Pill
@@ -340,8 +274,8 @@ function GamingOverlay({ obs = false } = {}) {
             color: 'rgba(244,236,216,0.55)',
           }}>
             <span>0</span>
-            <span>250</span>
-            <span>500</span>
+            <span>{Math.round(goal.max / 2)}</span>
+            <span>{goal.max}</span>
           </div>
         </div>
 
@@ -374,6 +308,8 @@ function GamingOverlay({ obs = false } = {}) {
       <CornerBracket pos="br" />
 
       <SeigaihaTexture opacity={0.3} />
+
+      <TwitchSetupBanner show={!twitch.isConfigured} />
     </div>
   );
 }

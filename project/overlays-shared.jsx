@@ -183,4 +183,414 @@ function FeedPlaceholder({ label, sub, style = {} }) {
   );
 }
 
-Object.assign(window, { COLORS, CornerBracket, VKanji, Seal, LiveDot, SeigaihaTexture, Pill, FeedPlaceholder });
+// ─── TWITCH LIVE DATA ───────────────────────────────────────────
+
+function useTwitchData() {
+  const [cfg] = React.useState(() => ({
+    token: localStorage.getItem('twitch_access_token') || '',
+    clientId: localStorage.getItem('twitch_client_id') || '',
+    clientSecret: localStorage.getItem('twitch_client_secret') || '',
+    channel: localStorage.getItem('twitch_channel') || 'yugurekageri',
+  }));
+
+  const isConfigured = !!(cfg.token && cfg.clientId && cfg.channel);
+
+  const [userId, setUserId] = React.useState(null);
+  const [streamInfo, setStreamInfo] = React.useState(null);
+  const [followerCount, setFollowerCount] = React.useState(null);
+  const [subCount, setSubCount] = React.useState(null);
+  const [goal, setGoal] = React.useState(null);
+  const [events, setEvents] = React.useState([]);
+  const [uptime, setUptime] = React.useState('00:00:00');
+  const [peakViewers, setPeakViewers] = React.useState(() => Number(localStorage.getItem('stream_peak_viewers') || 0) || null);
+
+  const initialFollowersRef = React.useRef(null);
+  const initialSubsRef = React.useRef(null);
+  const seenFollowsRef = React.useRef(new Set());
+  const seenSubsRef = React.useRef(new Set());
+  const initializedRef = React.useRef(false);
+
+  const doRefresh = React.useCallback(async () => {
+    const rt = localStorage.getItem('twitch_refresh_token');
+    if (!rt || !cfg.clientId) return null;
+    try {
+      const r = await fetch('https://id.twitch.tv/oauth2/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ client_id: cfg.clientId, client_secret: cfg.clientSecret, grant_type: 'refresh_token', refresh_token: rt }),
+      });
+      if (!r.ok) return null;
+      const d = await r.json();
+      localStorage.setItem('twitch_access_token', d.access_token);
+      if (d.refresh_token) localStorage.setItem('twitch_refresh_token', d.refresh_token);
+      if (d.expires_in) localStorage.setItem('twitch_token_expiry', String(Date.now() + d.expires_in * 1000));
+      return d.access_token;
+    } catch { return null; }
+  }, [cfg.clientId]);
+
+  const api = React.useCallback(async (path) => {
+    const expiry = Number(localStorage.getItem('twitch_token_expiry') || 0);
+    let token = localStorage.getItem('twitch_access_token') || cfg.token;
+    if (!token) throw new Error('no token');
+    if (expiry && Date.now() > expiry - 300_000) {
+      const fresh = await doRefresh();
+      if (fresh) token = fresh;
+    }
+    const req = (t) => fetch(`https://api.twitch.tv/helix${path}`, {
+      headers: { 'Authorization': `Bearer ${t}`, 'Client-Id': cfg.clientId },
+    });
+    let r = await req(token);
+    if (r.status === 401) {
+      const fresh = await doRefresh();
+      if (fresh) r = await req(fresh);
+    }
+    if (!r.ok) throw new Error(`${r.status}`);
+    return r.json();
+  }, [cfg.token, cfg.clientId, doRefresh]);
+
+  React.useEffect(() => {
+    if (!isConfigured) return;
+    let alive = true;
+    api(`/users?login=${cfg.channel}`)
+      .then(d => { if (alive && d.data?.[0]) setUserId(d.data[0].id); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [isConfigured, cfg.channel, api]);
+
+  React.useEffect(() => {
+    if (!isConfigured) return;
+    let alive = true;
+    const poll = () =>
+      api(`/streams?user_login=${cfg.channel}`)
+        .then(d => {
+          if (alive) {
+            setStreamInfo(d.data?.[0] ?? null);
+            const s = d.data?.[0];
+            if (s) {
+              setPeakViewers(prev => {
+                const next = prev === null ? s.viewer_count : Math.max(prev, s.viewer_count);
+                localStorage.setItem('stream_peak_viewers', String(next));
+                return next;
+              });
+              localStorage.setItem('stream_started_at', s.started_at);
+            }
+          }
+        })
+        .catch(() => {});
+    poll();
+    const id = setInterval(poll, 30_000);
+    return () => { alive = false; clearInterval(id); };
+  }, [isConfigured, cfg.channel, api]);
+
+  React.useEffect(() => {
+    if (!streamInfo?.started_at) { setUptime('00:00:00'); return; }
+    const start = new Date(streamInfo.started_at).getTime();
+    const tick = () => {
+      const d = Date.now() - start;
+      const h = Math.floor(d / 3_600_000);
+      const m = Math.floor((d % 3_600_000) / 60_000);
+      const s = Math.floor((d % 60_000) / 1_000);
+      setUptime(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`);
+    };
+    tick();
+    const id = setInterval(tick, 1_000);
+    return () => clearInterval(id);
+  }, [streamInfo?.started_at]);
+
+  React.useEffect(() => {
+    if (!isConfigured || !userId) return;
+    let alive = true;
+    let pollId = null;
+
+    const fetchFollowers = async () => {
+      try {
+        const d = await api(`/channels/followers?broadcaster_id=${userId}&first=10`);
+        if (!alive) return;
+        if (d.total != null) {
+          if (initialFollowersRef.current == null) {
+            initialFollowersRef.current = d.total;
+            localStorage.setItem('stream_start_followers', String(d.total));
+          }
+          setFollowerCount(d.total);
+        }
+        const newOnes = (d.data || []).filter(f => !seenFollowsRef.current.has(f.user_id));
+        newOnes.forEach(f => seenFollowsRef.current.add(f.user_id));
+        if (newOnes.length && initializedRef.current) {
+          const mapped = newOnes.map(f => ({
+            kind: 'FOLLOW', id: f.user_id, who: f.user_name,
+            note: 'new follower', ts: Date.now(),
+          }));
+          setEvents(prev => [...mapped, ...prev].slice(0, 10));
+        }
+      } catch(e) {}
+    };
+
+    const fetchSubs = async () => {
+      try {
+        const d = await api(`/subscriptions?broadcaster_id=${userId}&first=10`);
+        if (!alive) return;
+        if (d.total != null) {
+          if (initialSubsRef.current == null) {
+            initialSubsRef.current = d.total;
+            localStorage.setItem('stream_start_subs', String(d.total));
+          }
+          setSubCount(d.total);
+        }
+        const newOnes = (d.data || []).filter(s => !seenSubsRef.current.has(s.user_id));
+        newOnes.forEach(s => seenSubsRef.current.add(s.user_id));
+        if (newOnes.length && initializedRef.current) {
+          const mapped = newOnes.map(s => {
+            const tier = s.tier === '2000' ? '2' : s.tier === '3000' ? '3' : '1';
+            return {
+              kind: 'SUB', id: s.user_id, who: s.user_name,
+              note: `tier ${tier}${s.is_gift ? ' · gifted' : ''}`, ts: Date.now(),
+            };
+          });
+          setEvents(prev => [...mapped, ...prev].slice(0, 10));
+        }
+      } catch(e) {}
+    };
+
+    const fetchGoal = async () => {
+      try {
+        const d = await api(`/goals?broadcaster_id=${userId}`);
+        if (!alive) return;
+        const g = d.data?.[0];
+        if (g) {
+          setGoal({
+            label: g.description || g.type.replace(/_/g, ' '),
+            cur: g.current_amount,
+            max: g.target_amount,
+          });
+        }
+      } catch(e) {}
+    };
+
+    const init = async () => {
+      await Promise.allSettled([fetchFollowers(), fetchSubs(), fetchGoal()]);
+      if (!alive) return;
+      initializedRef.current = true;
+      pollId = setInterval(async () => {
+        if (alive) await Promise.allSettled([fetchFollowers(), fetchSubs(), fetchGoal()]);
+      }, 60_000);
+    };
+
+    init();
+    return () => { alive = false; if (pollId) clearInterval(pollId); };
+  }, [isConfigured, userId, api]);
+
+  const followerDelta = (followerCount != null && initialFollowersRef.current != null)
+    ? followerCount - initialFollowersRef.current : null;
+  const subDelta = (subCount != null && initialSubsRef.current != null)
+    ? subCount - initialSubsRef.current : null;
+
+  return {
+    isConfigured,
+    isLive: !!streamInfo,
+    uptime,
+    viewerCount: streamInfo?.viewer_count ?? null,
+    gameName: streamInfo?.game_name ?? null,
+    streamTitle: streamInfo?.title ?? null,
+    followerCount,
+    followerDelta,
+    subCount,
+    subDelta,
+    goal,
+    events,
+    peakViewers,
+  };
+}
+
+// ─── TWITCH CHAT (anonymous IRC) ────────────────────────────────
+
+function useTwitchChat() {
+  const channel = localStorage.getItem('twitch_channel') || 'yugurekageri';
+  const [messages, setMessages] = React.useState([]);
+  const [bitsEvents, setBitsEvents] = React.useState([]);
+
+  React.useEffect(() => {
+    if (!channel) return;
+    let alive = true;
+    let ws, reconnectId;
+
+    function connect() {
+      ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+      ws.onopen = () => {
+        ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands');
+        ws.send('PASS oauth:blah');
+        ws.send(`NICK justinfan${Math.floor(Math.random() * 99999)}`);
+        ws.send(`JOIN #${channel.toLowerCase()}`);
+      };
+      ws.onmessage = (e) => {
+        const lines = e.data.split('\r\n').filter(Boolean);
+        lines.forEach(line => {
+          if (line.startsWith('PING')) { ws.send('PONG :tmi.twitch.tv'); return; }
+          if (!line.includes('PRIVMSG')) return;
+          const tags = {};
+          const tagMatch = line.match(/^@([^ ]+)/);
+          if (tagMatch) tagMatch[1].split(';').forEach(t => { const [k,v] = t.split('='); tags[k]=v; });
+          const msgMatch = line.match(/PRIVMSG #\w+ :(.+)$/);
+          if (!msgMatch) return;
+          const msg = msgMatch[1].trim();
+          const user = tags['display-name'] || 'user';
+          const color = (tags['color'] && tags['color'] !== '') ? tags['color'] : '#9fe4ec';
+          const bits = parseInt(tags['bits'] || '0');
+          const id = Date.now() + Math.random();
+          setMessages(prev => [...prev.slice(-49), { id, user, msg, color, bits }]);
+          if (bits > 0) {
+            setBitsEvents(prev => [{
+              kind: 'BITS', id, who: user,
+              note: `${bits.toLocaleString()} bits`, ts: Date.now(),
+            }, ...prev].slice(0, 10));
+          }
+        });
+      };
+      ws.onclose = () => { if (alive) reconnectId = setTimeout(connect, 5000); };
+      ws.onerror = () => ws.close();
+    }
+
+    connect();
+    return () => { alive = false; clearTimeout(reconnectId); if (ws) ws.close(); };
+  }, [channel]);
+
+  return { messages, bitsEvents };
+}
+
+// ─── SPOTIFY NOW PLAYING ─────────────────────────────────────────
+
+function useSpotify() {
+  const [token, setToken] = React.useState(() => localStorage.getItem('spotify_access_token') || '');
+  const [track, setTrack] = React.useState(null);
+
+  React.useEffect(() => {
+    const handler = () => setToken(localStorage.getItem('spotify_access_token') || '');
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
+
+  const doSpotifyRefresh = React.useCallback(async () => {
+    const rt = localStorage.getItem('spotify_refresh_token');
+    const clientId = localStorage.getItem('spotify_client_id');
+    if (!rt || !clientId) return null;
+    try {
+      const r = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ client_id: clientId, grant_type: 'refresh_token', refresh_token: rt }),
+      });
+      if (!r.ok) return null;
+      const d = await r.json();
+      localStorage.setItem('spotify_access_token', d.access_token);
+      if (d.refresh_token) localStorage.setItem('spotify_refresh_token', d.refresh_token);
+      if (d.expires_in) localStorage.setItem('spotify_token_expiry', String(Date.now() + d.expires_in * 1000));
+      setToken(d.access_token);
+      return d.access_token;
+    } catch { return null; }
+  }, []);
+
+  React.useEffect(() => {
+    if (!token) return;
+    let alive = true;
+
+    const fetchCurrent = async () => {
+      let t = localStorage.getItem('spotify_access_token') || token;
+      const expiry = Number(localStorage.getItem('spotify_token_expiry') || 0);
+      if (expiry && Date.now() > expiry - 300_000) {
+        const fresh = await doSpotifyRefresh();
+        if (fresh) t = fresh;
+      }
+      try {
+        let r = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+          headers: { 'Authorization': `Bearer ${t}` },
+        });
+        if (r.status === 401) {
+          const fresh = await doSpotifyRefresh();
+          if (!fresh || !alive) return;
+          r = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+            headers: { 'Authorization': `Bearer ${fresh}` },
+          });
+        }
+        if (!alive) return;
+        if (r.status === 204 || r.status === 404 || !r.ok) { setTrack(null); return; }
+        const data = await r.json();
+        if (!data?.item) { setTrack(null); return; }
+        setTrack({
+          name: data.item.name,
+          artist: data.item.artists?.map(a => a.name).join(', '),
+          album: data.item.album?.name,
+          albumArt: data.item.album?.images?.[1]?.url,
+          isPlaying: data.is_playing,
+          progress: data.progress_ms,
+          duration: data.item.duration_ms,
+        });
+      } catch {}
+    };
+
+    fetchCurrent();
+    const id = setInterval(fetchCurrent, 5_000);
+    return () => { alive = false; clearInterval(id); };
+  }, [token, doSpotifyRefresh]);
+
+  return track;
+}
+
+function SpotifyNowPlaying({ style = {} }) {
+  const track = useSpotify();
+  if (!track) return null;
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 14,
+      background: 'rgba(13,21,48,0.82)', backdropFilter: 'blur(10px)',
+      border: '1px solid rgba(244,236,216,0.1)', padding: '12px 18px',
+      ...style,
+    }}>
+      {track.albumArt
+        ? <img src={track.albumArt} alt="" style={{ width: 48, height: 48, objectFit: 'cover', flexShrink: 0 }} />
+        : <div style={{ display:'flex', alignItems:'flex-end', gap: 3, height: 28, flexShrink: 0 }}>
+            {[0.55,0.85,0.40,0.75,0.65].map((h,i) =>
+              <div key={i} style={{ width:3, height: h*28, background: COLORS.cyan,
+                animation: `eq${i%3} ${0.7+i*0.07}s ease-in-out infinite alternate` }} />
+            )}
+          </div>
+      }
+      <div style={{ display:'flex', flexDirection:'column', minWidth:0, overflow:'hidden' }}>
+        <span style={{ fontFamily:'"JetBrains Mono",monospace', fontSize:9, letterSpacing:2.5, color:COLORS.cyan }}>NOW PLAYING · SPOTIFY</span>
+        <span style={{ fontFamily:'"Shippori Mincho",serif', fontSize:16, fontWeight:600, color:COLORS.paper,
+          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{track.name}</span>
+        <span style={{ fontFamily:'"Manrope",sans-serif', fontSize:12, color:'rgba(244,236,216,0.55)',
+          overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{track.artist}</span>
+      </div>
+    </div>
+  );
+}
+
+function TwitchSetupBanner({ show }) {
+  if (!show) return null;
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: 0, left: 0, right: 0,
+      height: 32,
+      background: 'rgba(8,12,30,0.97)',
+      borderTop: `1px solid ${COLORS.gold}`,
+      display: 'flex', alignItems: 'center',
+      padding: '0 22px', gap: 12,
+      zIndex: 999,
+      fontFamily: '"JetBrains Mono", monospace',
+      fontSize: 10, letterSpacing: 2.5,
+    }}>
+      <span style={{ color: COLORS.liveRed }}>◆</span>
+      <span style={{ color: 'rgba(244,236,216,0.7)' }}>TWITCH NOT CONNECTED</span>
+      <span style={{ color: 'rgba(244,236,216,0.3)' }}>·</span>
+      <a href="twitch-setup.html" target="_blank"
+         style={{ color: COLORS.cyan, textDecoration: 'none' }}>
+        OPEN SETUP →
+      </a>
+      <span style={{ marginLeft: 'auto', color: 'rgba(244,236,216,0.25)', fontSize: 9, letterSpacing: 1.5 }}>
+        OPEN IN BROWSER TO CONFIGURE · HIDDEN IN OBS WHEN CONNECTED
+      </span>
+    </div>
+  );
+}
+
+Object.assign(window, { COLORS, CornerBracket, VKanji, Seal, LiveDot, SeigaihaTexture, Pill, FeedPlaceholder, useTwitchData, useTwitchChat, useSpotify, SpotifyNowPlaying, TwitchSetupBanner });

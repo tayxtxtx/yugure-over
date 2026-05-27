@@ -133,39 +133,7 @@ function BrbOverlay() {
             }}>{mm}<span style={{ opacity: 0.6 }}>:</span>{ss}</span>
           </div>
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16,
-            background: 'rgba(13,21,48,0.78)',
-            border: '1px solid rgba(244,236,216,0.12)',
-            padding: '16px 24px',
-            backdropFilter: 'blur(10px)'
-          }}>
-            {/* Equalizer-style bars */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 28 }}>
-              {[0.55, 0.85, 0.40, 0.75, 0.65, 0.30, 0.50].map((h, i) =>
-              <div key={i} style={{
-                width: 3, height: h * 28 + 'px',
-                background: COLORS.cyan,
-                animation: `eq${i % 3} ${0.7 + i * 0.07}s ease-in-out infinite alternate`
-              }} />
-              )}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span style={{
-                fontFamily: '"JetBrains Mono", monospace',
-                fontSize: 10, letterSpacing: 2.5,
-                color: COLORS.cyan
-              }}>NOW  ·  PLAYING</span>
-              <span style={{
-                fontFamily: '"Shippori Mincho", serif',
-                fontSize: 18,
-                fontWeight: 600,
-                color: COLORS.paper
-              }}>lo-fi prowl loop · 二尾 mix</span>
-            </div>
-          </div>
+          <SpotifyNowPlaying style={{ minWidth: 280, maxWidth: 420 }} />
         </div>
 
         <style>{`

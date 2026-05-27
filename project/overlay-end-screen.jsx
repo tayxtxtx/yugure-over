@@ -1,13 +1,45 @@
 // End Screen — 1920×1080 farewell scene
-// Today's recap stats, next stream teaser, big socials, character on right
+// Today's recap stats, next stream teaser, big socials
 
 function EndScreenOverlay() {
+  const twitch = useTwitchData();
+
+  const uptimeStr = React.useMemo(() => {
+    const startedAt = localStorage.getItem('stream_started_at');
+    if (!startedAt) return twitch.uptime || '—';
+    const diff = Date.now() - new Date(startedAt).getTime();
+    const h = Math.floor(diff / 3_600_000);
+    const m = Math.floor((diff % 3_600_000) / 60_000);
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }, [twitch.uptime]);
+
+  const peakViewers = localStorage.getItem('stream_peak_viewers');
+  const startFollowers = Number(localStorage.getItem('stream_start_followers') || 0);
+  const startSubs = Number(localStorage.getItem('stream_start_subs') || 0);
+
   const stats = [
-    { label: 'UPTIME',      jp: '時 間',  value: '04:38',  unit: 'h · m', accent: COLORS.cyan },
-    { label: 'PEAK VIEW.',  jp: '頂 点',  value: '2,840',  unit: 'live',  accent: COLORS.gold },
-    { label: 'NEW FOLLOW',  jp: '追 加',  value: '+132',   unit: 'today', accent: '#ff8aa6' },
-    { label: 'NEW SUBS',    jp: '会 員',  value: '+24',    unit: 'today', accent: COLORS.cyan },
+    { label: 'UPTIME',      jp: '時 間',  value: uptimeStr,
+      unit: 'h · m', accent: COLORS.cyan },
+    { label: 'PEAK VIEW.',  jp: '頂 点',
+      value: peakViewers ? Number(peakViewers).toLocaleString() : '—',
+      unit: 'live',  accent: COLORS.gold },
+    { label: 'NEW FOLLOWS', jp: '追 加',
+      value: twitch.followerDelta != null ? '+' + twitch.followerDelta
+        : twitch.followerCount != null ? '+' + Math.max(0, twitch.followerCount - startFollowers) : '—',
+      unit: 'today', accent: '#ff8aa6' },
+    { label: 'NEW SUBS',    jp: '会 員',
+      value: twitch.subDelta != null ? '+' + twitch.subDelta
+        : twitch.subCount != null ? '+' + Math.max(0, twitch.subCount - startSubs) : '—',
+      unit: 'today', accent: COLORS.cyan },
   ];
+
+  const nextStream = React.useMemo(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('stream_schedule') || 'null');
+      if (Array.isArray(saved) && saved.length) return saved[0];
+    } catch {}
+    return { day: 'WED', jp: '水', game: 'Lo-fi & Karaoke' };
+  }, []);
 
   const raidTarget = { name: 'shoryuken_jp', tag: '@shoryuken_jp', topic: 'rhythm + fight game co-stream' };
 
@@ -34,43 +66,6 @@ function EndScreenOverlay() {
         background: 'linear-gradient(180deg, transparent 0%, rgba(230,181,88,0.10) 50%, transparent 100%)',
         pointerEvents: 'none',
       }} />
-
-      {/* Right-side moon + character */}
-      <div style={{
-        position: 'absolute',
-        right: 0, top: 0, bottom: 0,
-        width: 760,
-      }}>
-        <div style={{
-          position: 'absolute',
-          width: 620, height: 620,
-          right: -60, top: 120,
-          borderRadius: '50%',
-          background:
-            'radial-gradient(circle at 40% 35%, rgba(230,181,88,0.22) 0%, rgba(230,181,88,0.08) 30%, transparent 65%),' +
-            'conic-gradient(from 220deg, rgba(230,181,88,0.55), rgba(108,92,199,0.35), rgba(108,214,228,0.5), rgba(230,181,88,0.55))',
-          opacity: 0.78,
-        }} />
-        <div style={{
-          position: 'absolute',
-          width: 620, height: 620,
-          right: -60, top: 120,
-          borderRadius: '50%',
-          background:
-            'radial-gradient(circle at 50% 45%, rgba(13,21,48,0) 58%, #0d1530 75%),' +
-            'radial-gradient(circle at 50% 50%, rgba(230,181,88,0.12), rgba(13,21,48,0.95) 70%)',
-        }} />
-        <img src="assets/character.png" alt=""
-          style={{
-            position: 'absolute',
-            right: -40,
-            bottom: -30,
-            height: 1080,
-            width: 'auto',
-            filter: 'drop-shadow(0 30px 40px rgba(0,0,0,0.5)) drop-shadow(0 0 36px rgba(230,181,88,0.15))',
-            pointerEvents: 'none',
-          }} />
-      </div>
 
       {/* TOP: eyebrow + big title */}
       <div style={{
@@ -269,7 +264,7 @@ function EndScreenOverlay() {
           fontFamily: '"Shippori Mincho", serif',
           fontSize: 19, fontWeight: 700,
           color: COLORS.paper,
-        }}>WED · Lo-fi &amp; Karaoke</span>
+        }}>{nextStream.day} · {nextStream.game}</span>
         <span style={{
           fontFamily: '"JetBrains Mono", monospace',
           fontSize: 11, letterSpacing: 2,

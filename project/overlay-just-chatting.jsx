@@ -2,8 +2,16 @@
 // Webcam fills most of the screen; chat panel on the right; topic banner top-left
 
 function JustChattingOverlay({ obs = false } = {}) {
-  // Mock chat messages (decorative — real OBS would have a live chat widget here)
-  const chat = [
+  const twitch = useTwitchData();
+  const { messages: liveChat, bitsEvents } = useTwitchChat();
+
+  const mockEvents = [
+    { kind: 'FOLLOW', who: 'shibata_q',   note: 'caught the prowl' },
+    { kind: 'SUB',    who: 'ame_drop',    note: 'tier 2 · 4 mo · nyaa' },
+    { kind: 'TIP',    who: 'kage_main',   note: '¥ 1,500 — "tuna fund"' },
+  ];
+
+  const displayChat = liveChat.length > 0 ? liveChat.slice(-8) : [
     { user: 'kage_main',     color: '#6cd6e4', msg: 'GM ☕ the twin tails are FLOOFY today' },
     { user: 'tsuki_no_yoru', color: '#e6b558', msg: 'shamisen cover when' },
     { user: 'oceanic_mango', color: '#a78bff', msg: 'play the cat scratch loop pls' },
@@ -14,11 +22,11 @@ function JustChattingOverlay({ obs = false } = {}) {
     { user: 'lo_fi_loner',   color: '#9fe4ec', msg: 'this BGM ♪ goes hard' },
   ];
 
-  const recentEvents = [
-    { kind: 'FOLLOW', who: 'shibata_q',   note: 'caught the prowl' },
-    { kind: 'SUB',    who: 'ame_drop',    note: 'tier 2 · 4 mo · nyaa' },
-    { kind: 'TIP',    who: 'kage_main',   note: '¥ 1,500 — "tuna fund"' },
-  ];
+  const allEvents = React.useMemo(() => {
+    const combined = [...twitch.events, ...bitsEvents];
+    combined.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    return combined.length > 0 ? combined.slice(0, 3) : mockEvents;
+  }, [twitch.events, bitsEvents]);
 
   return (
     <div style={{
@@ -104,12 +112,19 @@ function JustChattingOverlay({ obs = false } = {}) {
             color: COLORS.paper,
           }}>LIVE</span>
         </div>
-        <Pill color={COLORS.cyan} size="md">02:47:12</Pill>
-        <Pill color={COLORS.gold} size="md">▲ 1,248</Pill>
+        <Pill color={COLORS.cyan} size="md">{twitch.uptime}</Pill>
+        <Pill color={COLORS.gold} size="md">▲ {twitch.viewerCount != null ? twitch.viewerCount.toLocaleString() : '—'}</Pill>
       </div>
 
       {/* Vertical kanji */}
       <VKanji top={140} right={48} fontSize={28} chars={['夕','暮','翳']} small="STREAMING · LIVE" />
+
+      {/* SPOTIFY NOW PLAYING — above chat panel */}
+      <SpotifyNowPlaying style={{
+        position: 'absolute',
+        right: 110, top: 930,
+        width: 420,
+      }} />
 
       {/* CHAT PANEL — right side */}
       <div style={{
@@ -136,16 +151,16 @@ function JustChattingOverlay({ obs = false } = {}) {
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: 10, letterSpacing: 1.5,
             color: 'rgba(244,236,216,0.4)',
-          }}>1.2k watching</div>
+          }}>{twitch.viewerCount != null ? (twitch.viewerCount >= 1000 ? (twitch.viewerCount / 1000).toFixed(1) + 'k' : twitch.viewerCount) + ' watching' : '— watching'}</div>
         </div>
 
         {/* Messages */}
         <div style={{ flex: 1, padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 12, overflow: 'hidden' }}>
-          {chat.map((c, i) => (
-            <div key={i} style={{
+          {displayChat.map((c, i) => (
+            <div key={c.id != null ? c.id : i} style={{
               fontSize: 14,
               lineHeight: 1.45,
-              opacity: 0.4 + (i / chat.length) * 0.6,
+              opacity: 0.4 + (i / displayChat.length) * 0.6,
             }}>
               <span style={{ color: c.color, fontWeight: 600, marginRight: 6 }}>{c.user}</span>
               <span style={{ color: 'rgba(244,236,216,0.5)' }}>·</span>
@@ -198,7 +213,7 @@ function JustChattingOverlay({ obs = false } = {}) {
           recent
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 36, flex: 1, overflow: 'hidden' }}>
-          {recentEvents.map((e, i) => (
+          {allEvents.map((e, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, whiteSpace: 'nowrap' }}>
               <Pill
                 size="sm"
@@ -232,6 +247,8 @@ function JustChattingOverlay({ obs = false } = {}) {
       <CornerBracket pos="br" />
 
       <SeigaihaTexture opacity={0.35} />
+
+      <TwitchSetupBanner show={!twitch.isConfigured} />
     </div>
   );
 }

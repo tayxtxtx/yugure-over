@@ -11,11 +11,17 @@ function StartingSoonOverlay() {
   const mm = String(Math.floor(secs / 60)).padStart(2, '0');
   const ss = String(secs % 60).padStart(2, '0');
 
-  const schedulePeek = [
-    { day: 'TUE', jp: '火', game: 'Horror Night · Faith III' },
-    { day: 'WED', jp: '水', game: 'Lo-fi & Karaoke' },
-    { day: 'FRI', jp: '金', game: 'Elden Ring DLC · Boss Rush' },
-  ];
+  const schedulePeek = React.useMemo(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('stream_schedule') || 'null');
+      if (Array.isArray(saved) && saved.length) return saved;
+    } catch {}
+    return [
+      { day: 'TUE', jp: '火', game: 'Horror Night · Faith III' },
+      { day: 'WED', jp: '水', game: 'Lo-fi & Karaoke' },
+      { day: 'FRI', jp: '金', game: 'Elden Ring DLC · Boss Rush' },
+    ];
+  }, []);
 
   return (
     <div style={{
@@ -69,18 +75,6 @@ function StartingSoonOverlay() {
         borderRadius: '50%',
         border: '1px dashed rgba(244,236,216,0.12)',
       }} />
-
-      {/* Character */}
-      <img src="assets/character.png" alt=""
-        style={{
-          position: 'absolute',
-          right: 80,
-          bottom: -40,
-          height: 1100,
-          width: 'auto',
-          filter: 'drop-shadow(0 30px 40px rgba(0,0,0,0.45)) drop-shadow(0 0 28px rgba(108,214,228,0.18))',
-          pointerEvents: 'none',
-        }} />
 
       {/* TOP — kanji eyebrow + title */}
       <div style={{
